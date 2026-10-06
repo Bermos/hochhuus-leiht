@@ -57,23 +57,24 @@ proxies `/api` to `localhost:8080`.
 
 `kitchen.json` declares the build (the `Dockerfile`), the health check, and a
 `migrate` task that runs before each release takes traffic. The rest is set
-up once for the project (here `hochhuus`):
+up once for the project (here `hochhuus-leiht`, served at
+<https://hochhuus-leiht.bermos.dev>):
 
 ```sh
-kitchen link --project hochhuus
+kitchen link --project hochhuus-leiht
 
 # Postgres and a bucket
-kitchen api POST /claims --data '{"name": "hochhuus-db", "project": "hochhuus", "connection": "<postgres connection>", "type": "postgres"}'
-kitchen api POST /claims --data '{"name": "hochhuus-photos", "project": "hochhuus", "connection": "<objectStore connection>", "type": "objectStore", "objectStore": {"size": "5Gi"}}'
+kitchen api POST /claims --data '{"name": "hochhuus-leiht-db", "project": "hochhuus-leiht", "connection": "postgres", "type": "postgres", "postgres": {"storage": {"size": "2Gi"}}}'
+kitchen api POST /claims --data '{"name": "hochhuus-leiht-photos", "project": "hochhuus-leiht", "connection": "kitchen-objectstore", "type": "objectStore", "objectStore": {"size": "5Gi"}}'
 
-kitchen env set --from-claim DATABASE_URL=hochhuus-db:url
-kitchen env set --from-claim S3_ENDPOINT=hochhuus-photos:endpoint
-kitchen env set --from-claim S3_BUCKET=hochhuus-photos:bucket
-kitchen env set --from-claim S3_REGION=hochhuus-photos:region
-kitchen env set --from-claim S3_ACCESS_KEY_ID=hochhuus-photos:accessKeyId
-kitchen env set --from-claim S3_SECRET_ACCESS_KEY=hochhuus-photos:secretAccessKey
-kitchen env set --from-claim S3_FORCE_PATH_STYLE=hochhuus-photos:forcePathStyle
-kitchen env set --from-claim S3_CA_FILE=hochhuus-photos:caCertFile   # bundled store only
+kitchen env set --from-claim DATABASE_URL=hochhuus-leiht-db:url
+kitchen env set --from-claim S3_ENDPOINT=hochhuus-leiht-photos:endpoint
+kitchen env set --from-claim S3_BUCKET=hochhuus-leiht-photos:bucket
+kitchen env set --from-claim S3_REGION=hochhuus-leiht-photos:region
+kitchen env set --from-claim S3_ACCESS_KEY_ID=hochhuus-leiht-photos:accessKeyId
+kitchen env set --from-claim S3_SECRET_ACCESS_KEY=hochhuus-leiht-photos:secretAccessKey
+kitchen env set --from-claim S3_FORCE_PATH_STYLE=hochhuus-leiht-photos:forcePathStyle
+kitchen env set --from-claim S3_CA_FILE=hochhuus-leiht-photos:caCertFile   # bundled store only
 
 # Codes and the cookie key
 kitchen secret set house-code --value-stdin < house-code.txt
@@ -85,3 +86,7 @@ kitchen env set --from-secret SESSION_SECRET=kitchen-project-secrets:session-sec
 
 kitchen deploy
 ```
+
+A release freezes the settings it was cut with, so after changing a variable
+or secret, `kitchen redeploy` cuts a new release of the running commit with
+the settings as they stand.
